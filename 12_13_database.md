@@ -227,141 +227,141 @@ For more examples, refer to your SQL database and practice these JOINs with real
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-# SQL Query Performance Optimization
+# SQL 쿼리 성능 최적화
 
-Optimizing query performance often starts with understanding and determining the appropriate type of execution plan. This document provides a detailed explanation of execution plans, including their components, analysis, and optimization techniques.
-
----
-
-## 1. What is an Execution Plan?
-An **execution plan** is a step-by-step guide that the database uses to execute a SQL query efficiently. It includes information on how tables are accessed, which indexes are used, and the join algorithms selected.
-
-Think of it as the **travel itinerary** for your query’s journey to retrieve the desired results.
-
-- **Goal**: Minimize execution time and resource usage (e.g., CPU, memory, disk I/O).
+SQL 쿼리의 성능을 최적화하려면 먼저 실행 계획의 유형을 이해하고 적절히 선택하는 것이 중요합니다. 이 문서는 실행 계획의 구성 요소, 분석 방법, 최적화 기법을 자세히 설명합니다.
 
 ---
 
-## 2. Understanding with an Analogy
-### Analogy: Planning a Trip
-Imagine you want to travel to a destination:
-- **Direct flight**: The fastest route but may cost more.
-- **Combination of bus and train**: Cheaper but takes longer.
-- **Walking**: Free but impractical for long distances.
+## 1. 실행 계획이란?
+**실행 계획(Execution Plan)**은 데이터베이스가 SQL 쿼리를 효율적으로 실행하기 위해 사용하는 단계별 전략입니다. 테이블에 접근하는 방식, 사용되는 인덱스, 선택된 조인 알고리즘 등을 포함합니다.
 
-Similarly, a database optimizer evaluates all possible ways to execute a query and chooses the most efficient plan.
+실행 계획은 쿼리 결과를 얻기 위한 **여행 경로**와 같습니다.
+
+- **목표**: 실행 시간을 최소화하고 CPU, 메모리, 디스크 I/O와 같은 자원을 효율적으로 사용하는 것입니다.
 
 ---
 
-## 3. Key Components of an Execution Plan
-Execution plans can be viewed using tools or commands like `EXPLAIN` in MySQL or PostgreSQL. The plan typically includes the following components:
+## 2. 비유로 이해하기
+### 여행 계획 비유
+어떤 목적지에 도착하려 한다고 가정합시다:
+- **직항 비행기**: 가장 빠르지만 비용이 많이 듭니다.
+- **버스와 기차를 조합**: 저렴하지만 시간이 오래 걸립니다.
+- **도보 이동**: 무료지만 먼 거리에 비효율적입니다.
 
-### Example Command:
+마찬가지로, 데이터베이스 최적화 도구는 쿼리를 실행하는 다양한 방법을 평가하고 가장 효율적인 계획을 선택합니다.
+
+---
+
+## 3. 실행 계획의 주요 구성 요소
+실행 계획은 MySQL이나 PostgreSQL에서 `EXPLAIN` 같은 명령어를 통해 확인할 수 있습니다. 일반적으로 다음과 같은 정보를 포함합니다:
+
+### 예시 명령어:
 ```sql
 EXPLAIN SELECT * FROM Orders WHERE customer_id = 12345;
 ```
 
-### Example Output:
+### 예시 출력:
 ```
 | id | select_type | table  | type   | possible_keys | key         | key_len | ref  | rows  | Extra             |
 |----|-------------|--------|--------|---------------|-------------|---------|------|-------|-------------------|
 |  1 | SIMPLE      | Orders | ref    | customer_idx  | customer_id | 4       | const|    10 | Using where       |
 ```
 
-### Key Terms:
-1. **id**: Identifies the query step.
-2. **select_type**: Specifies the type of query (e.g., `SIMPLE`, `SUBQUERY`).
-3. **table**: Indicates the table being accessed.
-4. **type**: Access method used:
-   - `ALL`: Full table scan (inefficient for large tables).
-   - `index`: Uses an index scan.
-   - `ref`: Searches for specific key references.
-5. **possible_keys**: Lists indexes that can be used.
-6. **key**: The index actually used.
-7. **rows**: Number of rows estimated to be scanned.
-8. **Extra**: Additional information (e.g., `Using where`, `Using filesort`).
+### 주요 용어:
+1. **id**: 쿼리 단계 식별자.
+2. **select_type**: 쿼리 유형을 나타냄 (예: `SIMPLE`, `SUBQUERY`).
+3. **table**: 접근 중인 테이블 이름.
+4. **type**: 테이블 액세스 방식:
+   - `ALL`: 전체 테이블 스캔 (대규모 테이블에서는 비효율적).
+   - `index`: 인덱스만 스캔.
+   - `ref`: 특정 키 참조 검색.
+5. **possible_keys**: 사용할 수 있는 인덱스 목록.
+6. **key**: 실제 사용된 인덱스.
+7. **rows**: 스캔해야 할 행 수의 추정치.
+8. **Extra**: 추가 정보 (예: `Using where`, `Using filesort`).
 
 ---
 
-## 4. Types of Access Methods
+## 4. 테이블 액세스 방식
 
-### 1. Full Table Scan (`ALL`)
-- **What it does**: Scans every row in the table.
-- **When it occurs**: No index exists or the query cannot utilize existing indexes.
-- **Optimization**:
-  - Add appropriate indexes.
-  - Rewrite queries to limit the search scope.
+### 1. 전체 테이블 스캔 (`ALL`)
+- **설명**: 테이블의 모든 행을 스캔.
+- **발생 상황**: 인덱스가 없거나, 쿼리가 기존 인덱스를 활용하지 못하는 경우.
+- **최적화**:
+  - 적절한 인덱스를 추가.
+  - 쿼리를 재작성하여 검색 범위를 제한.
 
-### 2. Index Scan
-- **What it does**: Scans an index to find matching rows.
-- **When it occurs**: Index is used to narrow down the search.
-- **Optimization**:
-  - Ensure relevant columns are indexed.
+### 2. 인덱스 스캔
+- **설명**: 인덱스를 스캔하여 일치하는 행을 검색.
+- **발생 상황**: 인덱스를 활용하여 검색 범위를 줄임.
+- **최적화**:
+  - 관련 열에 인덱스를 추가.
 
-### 3. Join Processing
-- **Nested Loop Join**: Iterates through one table for each matching row in another table.
-- **Hash Join**: Builds a hash table for one input and probes it with the other.
-- **Merge Join**: Requires sorted input and merges the rows efficiently.
+### 3. 조인 처리
+- **중첩 루프 조인(Nested Loop Join)**: 한 테이블의 각 행에 대해 다른 테이블의 일치하는 행을 검색.
+- **해시 조인(Hash Join)**: 한 테이블의 데이터를 해시 테이블로 생성하고, 이를 이용해 다른 테이블을 검색.
+- **병합 조인(Merge Join)**: 정렬된 데이터를 병합하여 처리.
 
 ---
 
-## 5. How to Analyze and Optimize Execution Plans
+## 5. 실행 계획 분석 및 최적화 방법
 
-### Step 1: View the Execution Plan
-Use the `EXPLAIN` or `EXPLAIN ANALYZE` command to retrieve the execution plan for a query.
+### 1단계: 실행 계획 확인
+`EXPLAIN` 또는 `EXPLAIN ANALYZE` 명령어를 사용하여 쿼리의 실행 계획을 확인합니다.
 ```sql
 EXPLAIN SELECT * FROM Products WHERE price > 1000;
 ```
 
-### Step 2: Analyze Problem Areas
-Focus on columns such as `type` and `Extra` for inefficiencies:
-- **`type = ALL`**: Indicates a full table scan.
-- **`Extra = Using filesort`**: Indicates sorting that could be avoided with proper indexing.
+### 2단계: 문제 영역 분석
+`type`과 `Extra` 같은 컬럼을 중점적으로 확인:
+- **`type = ALL`**: 전체 테이블 스캔.
+- **`Extra = Using filesort`**: 정렬을 피하기 위해 추가 최적화 필요.
 
-### Step 3: Apply Optimization Techniques
-1. **Add Indexes**: 
+### 3단계: 최적화 기법 적용
+1. **인덱스 추가**:
    ```sql
    CREATE INDEX idx_price ON Products(price);
    ```
-2. **Rewrite Queries**:
-   Avoid `SELECT *` and retrieve only necessary columns.
+2. **쿼리 재작성**:
+   `SELECT *` 대신 필요한 열만 검색.
    ```sql
    SELECT name, price FROM Products WHERE price > 1000;
    ```
-3. **Change Joins**:
-   Optimize join conditions and ensure indexed columns are used for filtering.
+3. **조인 최적화**:
+   조인 조건을 개선하고 인덱스를 활용.
 
 ---
 
-## 6. Practical Examples
+## 6. 실전 예제
 
-### Example 1: Optimizing a Simple Query
-#### Query:
+### 예제 1: 간단한 쿼리 최적화
+#### 문제:
 ```sql
 SELECT * FROM Orders WHERE customer_id = 12345;
 ```
 
-#### Execution Plan:
+#### 실행 계획:
 ```
 | id | select_type | table  | type | possible_keys | key  | rows  | Extra |
 |----|-------------|--------|------|---------------|------|-------|-------|
 |  1 | SIMPLE      | Orders | ALL  | NULL          | NULL | 10000 | NULL  |
 ```
 
-#### Problem:
-- Full table scan (`type = ALL`).
+#### 문제점:
+- 전체 테이블 스캔 (`type = ALL`).
 
-#### Solution:
-1. Add an index on `customer_id`:
+#### 해결:
+1. `customer_id`에 인덱스를 추가:
    ```sql
    CREATE INDEX idx_customer_id ON Orders(customer_id);
    ```
-2. Check the plan again:
+2. 실행 계획 재확인:
    ```sql
    EXPLAIN SELECT * FROM Orders WHERE customer_id = 12345;
    ```
    
-   Updated Plan:
+   업데이트된 실행 계획:
    ```
    | id | select_type | table  | type | possible_keys | key         | rows | Extra |
    |----|-------------|--------|------|---------------|-------------|------|-------|
@@ -370,29 +370,60 @@ SELECT * FROM Orders WHERE customer_id = 12345;
 
 ---
 
-## 7. Tools and Resources
+## 7. 서브쿼리
 
-### Commands and Tools:
-1. **`EXPLAIN`**: Displays the query execution plan.
-2. **`EXPLAIN ANALYZE`**: Executes the query and provides runtime statistics (PostgreSQL).
-3. **Query Profilers**: Tools like MySQL Workbench or pgAdmin provide graphical insights into execution plans.
+### 서브쿼리란?
+**서브쿼리(Subquery)**는 다른 SQL 쿼리 안에 중첩된 쿼리입니다. 중간 계산이나 필터링을 수행하기 위해 사용됩니다. 서브쿼리는 `SELECT`, `FROM`, `WHERE` 절에 나타날 수 있습니다.
 
-### Further Reading:
+### 서브쿼리 유형:
+1. **스칼라 서브쿼리**:
+   - 단일 값을 반환.
+   - **예시**:
+     ```sql
+     SELECT name FROM Products WHERE price = (SELECT MAX(price) FROM Products);
+     ```
+2. **행 서브쿼리**:
+   - 단일 행을 반환.
+   - **예시**:
+     ```sql
+     SELECT name FROM Products WHERE (category, price) = (SELECT category, MAX(price) FROM Products GROUP BY category);
+     ```
+3. **테이블 서브쿼리**:
+   - 다중 행 또는 전체 테이블을 반환.
+   - **예시**:
+     ```sql
+     SELECT name FROM Products WHERE category IN (SELECT category FROM Categories WHERE active = 1);
+     ```
+
+### 서브쿼리 vs. 조인:
+- 서브쿼리는 작성이 간단하지만 대규모 데이터셋에서 성능이 떨어질 수 있음.
+- 조인은 별도의 쿼리 실행 없이 더 효율적.
+
+---
+
+## 8. 도구 및 참고 자료
+
+### 명령어 및 도구:
+1. **`EXPLAIN`**: 실행 계획 확인.
+2. **`EXPLAIN ANALYZE`**: 쿼리를 실행하고 런타임 통계를 제공 (PostgreSQL).
+3. **쿼리 프로파일러**: MySQL Workbench, pgAdmin 등 시각적 실행 계획 도구.
+
+### 참고 자료:
 - [MySQL EXPLAIN Documentation](https://dev.mysql.com/doc/refman/8.0/en/explain.html)
 - [SQL Performance Explained](https://use-the-index-luke.com/)
 
 ---
 
-## 8. Practice Exercises
-1. Optimize the following query:
+## 9. 연습 문제
+1. 다음 쿼리를 최적화하세요:
    ```sql
    SELECT * FROM Products WHERE category = 'Electronics';
    ```
-2. Use `EXPLAIN` to identify inefficiencies in the query below:
+2. 아래 쿼리에서 실행 계획을 확인하고 비효율성을 찾아보세요:
    ```sql
    SELECT * FROM Orders o JOIN Customers c ON o.customer_id = c.id;
    ```
-3. Rewrite the query to reduce execution time by adding indexes and filtering unnecessary data.
+3. 인덱스를 추가하고 불필요한 데이터를 제거하여 쿼리를 최적화하세요.
 
 ---
 
