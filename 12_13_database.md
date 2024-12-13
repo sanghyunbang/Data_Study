@@ -105,4 +105,124 @@ FROM INFORMATION_SCHEMA.TABLES;
 - [SQL Server 공식 문서](https://learn.microsoft.com/en-us/sql/)
 - [Azure SQL Database 가이드](https://learn.microsoft.com/en-us/azure/azure-sql/)
 
-이 문서를 통해 SQL Server 데이터베이스 전환과 구조를 더 잘 이해할 수 있기를 바랍니다!
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# SQL JOINs: Left and Right Tables Explained
+
+## What is a SQL JOIN?
+SQL JOIN combines rows from two or more tables based on a related column. It is essential for querying data stored across multiple tables in a relational database.
+
+## Understanding Left and Right Tables in JOINs
+
+### 1. Left and Right Table Definition
+- **Left Table (LEFT):** The table mentioned **after `FROM`** in the query.
+- **Right Table (RIGHT):** The table mentioned **after `JOIN`** in the query.
+
+### 2. SELECT and Left/Right Relationship
+- **`SELECT` Clause:** Specifies the columns to be included in the result set but does not determine which table is LEFT or RIGHT.
+- **`FROM` Clause:** Determines the LEFT table.
+- **`JOIN` Clause:** Determines the RIGHT table.
+
+### Example Query
+```sql
+SELECT Orders.OrderID, Customers.Name, Customers.City
+FROM Orders
+INNER JOIN Customers ON Orders.CustomerID = Customers.CustomerID;
+```
+- **LEFT Table:** Orders
+- **RIGHT Table:** Customers
+- **SELECT:** Specifies columns from both tables to be included in the output.
+
+---
+
+## Types of SQL JOINs
+
+### 1. INNER JOIN
+- **Definition:** Returns rows with matching values in both LEFT and RIGHT tables.
+- **SQL Example:**
+  ```sql
+  SELECT Student.Name, Grade.Grade
+  FROM Student
+  INNER JOIN Grade ON Student.StudentID = Grade.StudentID;
+  ```
+- **Result:** Only students with grades will appear in the result.
+
+### 2. LEFT JOIN (LEFT OUTER JOIN)
+- **Definition:** Returns all rows from the LEFT table and matching rows from the RIGHT table. Unmatched rows in the RIGHT table appear as `NULL`.
+- **SQL Example:**
+  ```sql
+  SELECT Student.Name, Grade.Grade
+  FROM Student
+  LEFT JOIN Grade ON Student.StudentID = Grade.StudentID;
+  ```
+- **Result:** All students appear, even if they don't have a grade (their grade will show as `NULL`).
+
+### 3. RIGHT JOIN (RIGHT OUTER JOIN)
+- **Definition:** Returns all rows from the RIGHT table and matching rows from the LEFT table. Unmatched rows in the LEFT table appear as `NULL`.
+- **SQL Example:**
+  ```sql
+  SELECT Student.Name, Grade.Grade
+  FROM Student
+  RIGHT JOIN Grade ON Student.StudentID = Grade.StudentID;
+  ```
+- **Result:** All grades appear, even if no student is linked to them (student name will show as `NULL`).
+
+### 4. FULL JOIN (FULL OUTER JOIN)
+- **Definition:** Returns all rows from both LEFT and RIGHT tables. Unmatched rows in either table appear as `NULL`.
+- **SQL Example:**
+  ```sql
+  SELECT Student.Name, Grade.Grade
+  FROM Student
+  FULL OUTER JOIN Grade ON Student.StudentID = Grade.StudentID;
+  ```
+- **Result:** Includes all students and all grades, with unmatched values appearing as `NULL`.
+
+### 5. CROSS JOIN
+- **Definition:** Returns the Cartesian product of both tables (every row from the LEFT table is combined with every row from the RIGHT table).
+- **SQL Example:**
+  ```sql
+  SELECT Student.Name, Grade.Grade
+  FROM Student
+  CROSS JOIN Grade;
+  ```
+- **Result:** Every possible combination of students and grades.
+
+---
+
+## How SELECT Works in JOINs
+- The `SELECT` clause specifies which columns to include in the output, but it does not influence which table is LEFT or RIGHT.
+- Example:
+  ```sql
+  SELECT Orders.OrderID, Customers.Name
+  FROM Orders
+  LEFT JOIN Customers ON Orders.CustomerID = Customers.CustomerID;
+  ```
+  - `LEFT JOIN` ensures all rows from `Orders` appear.
+  - `SELECT` decides which columns to display: `Orders.OrderID` and `Customers.Name`.
+
+---
+
+## Key Takeaways
+1. **LEFT Table:** Always the table after `FROM`.
+2. **RIGHT Table:** Always the table after `JOIN`.
+3. **SELECT Clause:** Specifies the columns in the output, independent of LEFT/RIGHT roles.
+4. **JOIN Types:** Determine which rows are included in the final result.
+
+---
+
+## Example Summary
+### Query:
+```sql
+SELECT Orders.OrderID, Customers.Name
+FROM Orders
+LEFT JOIN Customers ON Orders.CustomerID = Customers.CustomerID;
+```
+- **LEFT Table:** Orders
+- **RIGHT Table:** Customers
+- **Result:** All orders are shown. If an order has no matching customer, the `Name` column will be `NULL`.
+
+---
+
+For more examples, refer to your SQL database and practice these JOINs with real data!
+
+
