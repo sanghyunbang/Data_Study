@@ -4,7 +4,7 @@
 JOIN은 데이터베이스에서 두 개 이상의 테이블을 연결하여 데이터를 가져오는 작업입니다.
 
 - 테이블 간의 **공통 열(Column)**을 기준으로 데이터를 연결합니다.
-- [**정규화(Normalization)**](normalization_basics.md)를 통해 데이터를 나누어 저장하기 때문에 JOIN이 필요합니다.
+- [**정규화(Normalization)**](supplement/normalization_basics.md)를 통해 데이터를 나누어 저장하기 때문에 JOIN이 필요합니다.
 
 ### 🎯 예시: 쇼핑몰 데이터 구조
 - **Customer 테이블**: 고객의 정보 (고객 ID, 이름, 주소 등)
