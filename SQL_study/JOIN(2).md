@@ -157,23 +157,30 @@ ORDER BY O.OrderID;
 
 ---
 
+
 ## 5. Hash Join 상세 설명
 
-### 5.1 개념
-- Hash Join은 한 테이블을 **Hash Table**로 변환하고, 다른 테이블과 매칭하여 조건을 만족하는 데이터를 반환하는 방식입니다.
-- Hash Table은 키-값 쌍으로 데이터를 저장하는 자료구조로, 특정 값을 빠르게 검색할 수 있습니다.
+### 5.1 Hash Table의 개념
+- **Hash Table**은 데이터를 저장하기 위한 자료구조로, 키와 값을 매핑하는 방식으로 작동합니다.
+- 해시 함수는 입력된 키를 고유한 해시 값으로 변환하며, 이를 통해 데이터를 특정 **버킷(Hash Bucket)**에 저장합니다.
 
-### 5.2 Hash Match Join이란?
-- Hash Match Join은 Hash Join의 실행 방식을 뜻하며, 두 단계로 진행됩니다:
-  1. **Build 단계**: 작은 테이블을 Hash Table로 변환합니다.
-  2. **Probe 단계**: 큰 테이블의 데이터를 Hash Table에서 검색하여 매칭되는 데이터를 찾습니다.
+### 5.2 Hash Bucket이란?
+- **Hash Bucket**은 Hash Table 내부의 저장 슬롯으로, 해시 함수에 의해 계산된 값에 따라 데이터가 저장됩니다.
+- 예를 들어, `hash(ProductID) = ProductID % 2`라는 해시 함수가 있다면, ProductID가 1, 3인 데이터는 동일한 Hash Bucket(버킷 1)에 저장될 수 있습니다.
+- 하나의 버킷에는 여러 데이터가 저장될 수 있으며, 이는 **해시 충돌(Hash Collision)**을 유발할 수 있습니다.
 
-### 5.3 작동 원리
-1. Build 단계: 작은 테이블을 Hash Table로 변환합니다.
-   - JOIN 조건 열을 키로 사용하여 Hash Table을 생성합니다.
-2. Probe 단계: 큰 테이블의 각 행을 Hash Table에서 검색하여 조건에 맞는 데이터를 반환합니다.
+### 5.3 Hash Match Join이란?
+- **Hash Match Join**은 Hash Join의 실행 방식으로, 다음 두 단계를 포함합니다:
+  1. **Build 단계**: 작은 테이블을 기반으로 Hash Table을 생성합니다.
+  2. **Probe 단계**: 큰 테이블의 각 행을 Hash Table과 비교하여 조건을 만족하는 데이터를 반환합니다.
 
-### 5.4 구체적인 예시
+### 5.4 작동 원리
+1. Build 단계: 작은 테이블의 데이터를 해시 함수로 변환하여 Hash Table 생성.
+   - 예: `hash(ProductID) = ProductID % 5`를 사용하여 데이터를 5개의 버킷으로 나눕니다.
+2. Probe 단계: 큰 테이블의 데이터를 Hash Table에서 검색하여 조건을 만족하는 데이터를 반환.
+   - 예: 큰 테이블의 `ProductID`를 동일한 해시 함수로 계산해 Hash Table에서 찾습니다.
+
+### 5.5 구체적인 예시
 #### 테이블 구조
 1. **Products 테이블**:
    | ProductID | ProductName |
@@ -189,6 +196,12 @@ ORDER BY O.OrderID;
    | 1002   | 2         | 20       |
    | 1003   | 3         | 30       |
 
+#### 해시 함수
+- **해시 함수**: `hash(ProductID) = ProductID % 2`
+- **Hash Table 생성**:
+  - 버킷 0: `ProductID = 2`
+  - 버킷 1: `ProductID = 1`, `ProductID = 3`
+
 #### SQL 쿼리
 ```sql
 SELECT P.ProductName, S.Quantity
@@ -200,8 +213,13 @@ ON P.ProductID = S.ProductID;
 #### 실행 과정
 1. Build 단계: `Products` 테이블을 Hash Table로 변환.
    - 키: `ProductID`, 값: `ProductName`.
-2. Probe 단계: `Sales` 테이블의 각 행의 `ProductID`를 Hash Table에서 검색.
-   - 조건 만족 시 `ProductName`과 `Quantity` 반환.
+   - 결과:
+     - 버킷 0: `ProductID = 2 (Mouse)`
+     - 버킷 1: `ProductID = 1 (Keyboard)`, `ProductID = 3 (Monitor)`
+2. Probe 단계: `Sales` 테이블의 각 행의 `ProductID`를 해시 함수로 계산하여 버킷을 검색.
+   - `SaleID = 1001`: `ProductID = 1` → 버킷 1에서 찾음 → `Keyboard, 10`
+   - `SaleID = 1002`: `ProductID = 2` → 버킷 0에서 찾음 → `Mouse, 20`
+   - `SaleID = 1003`: `ProductID = 3` → 버킷 1에서 찾음 → `Monitor, 30`
 
 #### 결과 데이터
 | ProductName | Quantity |
@@ -210,17 +228,29 @@ ON P.ProductID = S.ProductID;
 | Mouse       | 20       |
 | Monitor     | 30       |
 
-### 5.5 장점과 단점
+### 5.6 Hash Join의 장점과 단점
 #### ✅ 장점
-- 정렬이 필요하지 않아 정렬 비용이 없습니다.
-- 대규모 데이터에서도 빠르게 동작합니다.
+- **정렬이 필요하지 않아** 정렬 비용이 없습니다.
+- 대규모 데이터에서도 **빠르게 동작**합니다.
 
 #### ⚠️ 단점
-- Hash Table 생성에 메모리를 많이 사용합니다.
-- Hash 충돌이 발생할 경우 성능이 저하될 수 있습니다.
+- 해시 충돌이 발생할 가능성이 있습니다.
+  - **해시 충돌(Hash Collision)**: 서로 다른 키(예: `ProductID = 1`과 `ProductID = 3`)가 동일한 해시 버킷에 매핑되는 상황.
+  - **예시**: 해시 함수 `hash(ProductID) = ProductID % 2`를 사용하면, `ProductID = 1`과 `ProductID = 3`은 모두 버킷 1에 매핑됩니다.
+  - 충돌이 발생하면 체이닝이나 선형 탐색 같은 충돌 해결 전략이 필요하며, 이로 인해 조회 속도가 느려질 수 있습니다.
 
 ---
 
+### 5.7 해시 충돌 해결 방법
+1. **체이닝(Chaining)**:
+   - 충돌된 데이터를 링크드 리스트 형태로 저장.
+   - 예: 버킷 1 → `[1 → 3]`.
+
+2. **오픈 어드레싱(Open Addressing)**:
+   - 충돌이 발생한 경우, 다른 빈 슬롯을 찾아 데이터를 저장.
+   - 예: 버킷 1에 `ProductID = 1`, 버킷 2에 `ProductID = 3`.
+
+---
 ## 6. JOIN 알고리즘의 비유로 이해하기
 ### 🔄 Nested Loop Join
 - **비유**: 두 그룹의 사람들이 서로 일일이 악수를 하는 것.
