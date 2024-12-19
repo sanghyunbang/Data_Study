@@ -131,4 +131,3 @@ City = 'Daegu' → UserID = 4
    - **Index Seek**: 효율적 검색.
    - **Index Scan**: 비효율적 검색.
 
-질문이 있다면 언제든 물어보세요! 😊
