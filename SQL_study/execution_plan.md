@@ -50,7 +50,7 @@ SELECT * FROM Users WHERE Age > 30;
 
 ---
 
-### 📌 해결 방법: 인덱스 생성 및 활용 [**보충자료**](../supplement/Clustered%26Non-Clustered%20Index.md)
+### 📌 해결 방법: 인덱스 생성 및 활용 [**보충자료**](../supplement/Clustered&Non_Clustered_Index)
 ```sql
 -- 1. Clustered Index 생성
 CREATE CLUSTERED INDEX idx_Users_JoinDate ON Users(JoinDate);
