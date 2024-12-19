@@ -1,148 +1,100 @@
-# 🚀 SQL 실행 계획과 JOIN 최적화 배우기
+# 🚀 SQL Execution Plan 최적화 학습 자료
 
-SQL 실행 계획은 **쿼리 성능 최적화**를 위해 꼭 필요한 도구입니다. 이를 통해 병목 구간을 분석하고 효율적인 쿼리 실행 방법을 찾을 수 있습니다.
-
----
-
-## 🛤️ 실행 계획이란?
-
-SQL Server가 쿼리를 **어떻게 실행할지** 보여주는 **로드맵**입니다.  
-실행 계획은 크게 **세 가지**로 나눌 수 있습니다:
-
-1. **Estimated Execution Plan**: 쿼리를 실행하지 않고 **예상 경로**를 보여줍니다.  
-2. **Actual Execution Plan**: 쿼리를 실행한 후 **실제 경로**를 보여줍니다.  
-3. **Live Query Statistics**: 쿼리 실행 중 **실시간 진행 상황**을 시각적으로 보여줍니다.
+## 🌟 학습 목표
+- SQL 쿼리 최적화를 통해 실행 계획(Execution Plan)을 이해하고 성능을 개선.
+- **Index Scan**과 **Index Seek**의 차이점과 사용 방법 이해.
+- **Sargable**한 쿼리 작성 방법 학습.
 
 ---
 
-## 📊 실행 계획의 필요성
+## 📂 실습 데이터베이스 설정 및 쿼리 예제
 
-실제 업무에서 **느린 쿼리**를 만나면 이런 문제가 발생합니다:
-
-- 🐢 **응답 지연**: 웹사이트가 느려지고 고객 불만이 증가합니다.  
-- 🖥️ **서버 부하**: 비효율적인 쿼리가 서버 리소스를 과도하게 사용합니다.  
-- ⏳ **비즈니스 지연**: 보고서 생성이나 데이터 분석 시간이 오래 걸립니다.  
-
-### **해결책**
-실행 계획을 활용해 **병목**을 찾아내고, 최적화된 실행 방식을 적용합니다.
-
----
-
-## 🔎 실행 계획과 코드 예제
-
-### 1. Estimated Execution Plan (예상 실행 계획) 📋
-쿼리를 실행하지 않고 **예상 경로**만 보여줍니다.  
-
+### 📌 데이터베이스 생성 및 초기화
 ```sql
-SET SHOWPLAN_TEXT ON;
-SELECT * 
-FROM SalesLT.Address A 
-CROSS JOIN SalesLT.Customer B;
+-- 데이터베이스 생성 및 사용
+CREATE DATABASE LearningDB;
+USE LearningDB;
+
+-- Users 테이블 생성
+CREATE TABLE Users (
+    UserID INT PRIMARY KEY IDENTITY(1,1), -- 자동 증가 기본 키
+    UserName NVARCHAR(50), -- 사용자 이름
+    Age INT, -- 나이
+    JoinDate DATE, -- 가입 날짜
+    City NVARCHAR(50) -- 도시
+);
+
+-- 샘플 데이터 삽입
+INSERT INTO Users (UserName, Age, JoinDate, City)
+VALUES 
+('Alice', 25, '2023-01-15', 'Seoul'),
+('Bob', 30, '2022-05-20', 'Busan'),
+('Charlie', 35, '2023-07-30', 'Incheon'),
+('Diana', 40, '2021-11-10', 'Daegu'),
+('Eve', 28, '2022-12-01', 'Seoul');
 ```
 
-출력 예시:
+---
 
-```text
-|--Hash Match (Inner Join)
-   |--Clustered Index Scan (OBJECT:([SalesLT].[Address].[PK_Address]))
-   |--Clustered Index Scan (OBJECT:([SalesLT].[Customer].[PK_Customer]))
-```
-
-### 2. Actual Execution Plan (실제 실행 계획) ✅
-쿼리를 실행한 후 실제 처리 경로와 결과를 보여줍니다.
-
+### 📌 기본 문제: 인덱스가 없는 경우 (Table Scan 발생)
 ```sql
-SET SHOWPLAN_TEXT OFF;
-SELECT A.AddressID, C.CustomerID
-FROM SalesLT.Address A
-JOIN SalesLT.Customer C
-ON A.AddressID = C.CustomerID;
+-- 전체 데이터 조회 (비효율적 쿼리)
+SELECT * FROM Users WHERE Age > 30;
+
+-- 실행 계획 확인 방법 (SQL Server Management Studio 기준)
+-- 실행 계획 버튼 클릭 후 Table Scan 발생 여부를 확인
 ```
 
-### 3. Live Query Statistics (실시간 통계) ⏱️
-쿼리 실행 중 각 단계의 진행 상황과 행 수를 실시간으로 표시합니다.  
-
-**활성화 방법**: SSMS에서 "Live Query Statistics"를 활성화합니다.
+**문제점**: 테이블 전체를 스캔하기 때문에 데이터가 많아질수록 성능 저하 발생.  
+**Table Scan**: 테이블의 모든 데이터를 읽는 방식. 인덱스가 없을 때 주로 발생.
 
 ---
 
-## 🧩 JOIN 최적화 예제
-
-### 1. 문제 상황
-두 테이블 `Address`와 `Customer`가 있습니다.  
-데이터를 JOIN하는 쿼리가 너무 느립니다! 🐢
-
-### 2. 원인 분석
-실행 계획을 통해 **Table Scan**이 발생했음을 확인합니다:  
-테이블 전체를 스캔하기 때문에 성능이 저하됩니다.
-
-### 3. 해결 방법
-인덱스를 추가해서 성능을 개선합니다.
-
+### 📌 해결 방법: 인덱스 생성 및 활용
 ```sql
-CREATE INDEX IX_AddressID ON SalesLT.Address(AddressID);
-CREATE INDEX IX_CustomerID ON SalesLT.Customer(CustomerID);
+-- 1. Clustered Index 생성
+CREATE CLUSTERED INDEX idx_Users_JoinDate ON Users(JoinDate);
+
+-- 2. Non-Clustered Index 생성
+CREATE NONCLUSTERED INDEX idx_Users_City ON Users(City);
+
+-- 3. Non-Clustered Index를 활용한 효율적 쿼리
+SELECT * FROM Users WHERE City = 'Seoul';
+
+-- 실행 계획 확인: Index Seek를 사용하는지 확인
 ```
 
-**인덱스 추가 후**, 실행 계획을 확인하면 Table Scan이 **Index Seek**로 최적화됩니다. 🚀
+- **Clustered Index**: 데이터가 물리적으로 정렬된 상태로 저장.
+- **Non-Clustered Index**: 데이터와 별도로 인덱스를 저장하며 특정 열 검색에 유리.
 
 ---
 
-## 🏗️ 인덱스가 있는 경우에도 느린 이유와 해결책
+### 📌 Sargable vs Non-Sargable 쿼리 비교
+```sql
+-- 1. Non-Sargable 쿼리 (비효율적)
+SELECT * FROM Users WHERE YEAR(JoinDate) = 2023;
 
-### 1. 인덱스가 있는데도 느린 이유
-`City` 열에 인덱스가 있어도 쿼리가 느린 경우는 아래와 같은 상황일 수 있습니다:
+-- 2. Sargable 쿼리 (효율적)
+SELECT * FROM Users 
+WHERE JoinDate BETWEEN '2023-01-01' AND '2023-12-31';
+```
 
-#### a. 복합 인덱스의 비효율성
-- 기존 인덱스가 단독 열이 아닌, 다른 열과 함께 구성된 **복합 인덱스(Composite Index)**일 수 있습니다.
-- 예를 들어, `State`와 `City`로 구성된 복합 인덱스:
-  ```sql
-  CREATE INDEX IX_ComplexIndex ON SalesLT.Address(State, City);
-  ```
-- 이 경우, `State` 조건 없이 `City`만으로 데이터를 검색하면, 인덱스를 제대로 활용하지 못할 수 있습니다.
-
-#### b. 인덱스가 너무 커서 비효율적
-- 테이블 행 수가 많고, `City` 값이 다양하지 않을 경우, 인덱스 검색도 느릴 수 있습니다. 
-  - 예: "Washington"이라는 값이 너무 자주 반복된다면, SQL Server는 Index Scan을 선택할 가능성이 높습니다.
+- **Non-Sargable**: 함수(YEAR)를 사용하여 인덱스를 비활성화 → Index Scan 발생.
+- **Sargable**: 조건에 함수나 계산이 없어 인덱스 사용 가능 → Index Seek 발생.
 
 ---
 
-### 2. 해결 방법: 새로운 인덱스 생성
-#### a. 단일 열 인덱스 생성
-- `City` 열에 대한 단독 인덱스를 생성하면 성능이 크게 개선됩니다:
-  ```sql
-  CREATE INDEX IX_City ON SalesLT.Address(City);
-  ```
+### 📌 실행 계획 해석 방법
+**SQL Server Management Studio(SSMS)**에서 실행 계획을 활성화:
+- `Ctrl + M` 또는 "실행 계획 표시" 버튼 클릭.
 
-#### b. 커버링 인덱스 설계
-- 쿼리에서 자주 반환되는 다른 열을 포함하는 **커버링 인덱스**를 생성합니다:
-  ```sql
-  CREATE INDEX IX_City_Covering ON SalesLT.Address(City) INCLUDE (AddressID, PostalCode);
-  ```
-
-#### c. 필터링된 인덱스
-- 특정 조건에 맞는 데이터만 검색하도록 **필터링된 인덱스**를 설계합니다:
-  ```sql
-  CREATE INDEX IX_City_Filtered ON SalesLT.Address(City) WHERE State = 'WA';
-  ```
+**실행 계획의 아이콘 해석**:
+- **Table Scan**: 데이터 전체를 스캔 (비효율적).
+- **Index Seek**: 특정 조건으로 데이터 검색 (효율적).
 
 ---
 
-## 🎯 실전 적용 요약
-
-| 실행 계획              | 용도                    | 비유                              |
-|------------------------|-------------------------|-----------------------------------|
-| **Estimated Plan**     | 예상 경로 분석          | 지도 앱에서 경로 예측 🗺️         |
-| **Actual Plan**        | 실제 실행 후 경로 확인  | 여행 후 기록 🛤️                  |
-| **Live Query Statistics** | 실시간 진행 상황 모니터링 | 네비게이션 실시간 경로 🚗         |
-
----
-
-## 💡 결론
-
-SQL 실행 계획은 병목 구간을 찾아내고 최적화하는 강력한 도구입니다.
-
-- 쿼리를 더 빠르고 효율적으로 실행합니다.  
-- 비즈니스 성능과 서버 안정성을 개선합니다.  
-
-**Tip**: 실습을 통해 **Estimated Plan → Actual Plan → 최적화 단계**를 반복하세요! 🔄
+## 🎯 핵심 요약
+1. Table Scan은 성능 저하를 유발 → Index Seek으로 개선.
+2. Sargable 쿼리 작성으로 인덱스를 최대한 활용.
+3. Clustered Index와 Non-Clustered Index의 차이를 이해하고 적절히 사용.
