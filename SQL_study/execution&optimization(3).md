@@ -6,23 +6,23 @@
 
 1. 💡 SQL 성능 최적화란?  
 2. 🚀 SARGABLE 조건과 인덱스 활용  
-   - 2.1. 🛠 YEAR 함수 문제와 해결 방법  
-   - 2.2. 🔍 LEFT 함수 문제와 테이블 스캔  
+   - 2.1. YEAR 함수 문제와 해결 방법  
+   - 2.2. LEFT 함수 문제와 테이블 스캔  
 3. 🔑 Key Lookup과 INCLUDE로 최적화  
-   - 3.1. ❓ Key Lookup이란?  
-   - 3.2. ✅ INCLUDE를 통한 Key Lookup 방지  
+   - 3.1. Key Lookup이란?  
+   - 3.2. INCLUDE를 통한 Key Lookup 방지  
 4. 📏 데이터 타입 및 열 길이 최적화  
-   - 4.1. 📊 LEN 함수로 데이터 길이 분석  
-   - 4.2. ✂️ 열 길이 최적화 효과  
+   - 4.1. LEN 함수로 데이터 길이 분석  
+   - 4.2. 열 길이 최적화 효과  
 5. 🔄 정렬(Sort) 작업과 인덱스  
 6. ⚙️ Stored Procedure와 실행 계획 관리  
-   - 6.1. 📂 실행 계획 캐시와 캐시된 실행 계획  
-   - 6.2. 🌀 WITH RECOMPILE의 역할  
-   - 6.3. 🛑 캐시된 실행 계획 문제와 해결  
+   - 6.1. 실행 계획 캐시와 캐시된 실행 계획  
+   - 6.2. WITH RECOMPILE의 역할  
+   - 6.3. 캐시된 실행 계획 문제와 해결  
 7. 💾 디스크 I/O와 쿼리 성능  
 8. 🤝 Join 방식과 인덱스 최적화  
-   - 8.1. 🔄 Nested Loop Join vs Hash Join  
-   - 8.2. 🗂️ 인덱스가 Join 성능에 미치는 영향  
+   - 8.1. Nested Loop Join vs Hash Join  
+   - 8.2. 인덱스가 Join 성능에 미치는 영향  
 9. 🧪 실습: 성능 최적화 전후 비교  
 10. 🏁 결론 및 추가 학습 자료
 
