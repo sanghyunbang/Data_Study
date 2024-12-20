@@ -124,27 +124,85 @@
 
 ---
 
-## 5. 학습 추천 자료
+## 5. 데이터베이스 최적화
 
-### 5.1 입문용 자료
-- **책**:
-  - "Compilers: Principles, Techniques, and Tools" (Dragon Book)
-  - "Modern Operating Systems" by Andrew S. Tanenbaum.
-- **온라인 강의**:
-  - Coursera: *Compilers by Stanford University*
-  - Udemy: *LLVM 및 JIT 컴파일 강의*
+### 5.1 데이터베이스 성능 최적화의 중요성
+- **목적**: 시스템 부하를 줄이고 사용자 경험을 개선.
+- **영향**: 빠른 데이터 처리와 검색은 웹 애플리케이션과 앱 성능에 직접적인 영향을 미침.
 
-### 5.2 실습 자료
-- **LLVM**: [LLVM 공식 문서](https://llvm.org/docs/)
-- **GCC**: [GNU Compiler Collection 공식 사이트](https://gcc.gnu.org/)
-- **Clang**: [Clang 문서](https://clang.llvm.org/)
+### 5.2 주요 최적화 기술
+1. **인덱스(Index) 활용**:
+   - 데이터를 빠르게 검색하기 위해 테이블에 인덱스를 생성.
+   - 단점: 쓰기 작업 속도가 느려질 수 있음.
+
+2. **쿼리 최적화(Query Optimization)**:
+   - 불필요한 데이터 접근을 줄이고 효율적인 실행 계획을 생성.
+   - 예: `EXPLAIN` 명령어로 실행 계획 분석.
+
+3. **캐싱(Caching)**:
+   - 자주 사용되는 데이터를 메모리에 저장해 DB 부하를 줄임.
+   - 도구: Redis, Memcached.
+
+4. **데이터 분할(Sharding)**:
+   - 큰 테이블을 여러 개로 나눠 병렬로 처리.
+   - 대규모 트래픽 처리에 적합.
+
+5. **비동기 처리(Asynchronous Processing)**:
+   - 긴 실행 시간이 필요한 작업을 비동기로 처리.
+   - 예: 백그라운드에서 데이터 업데이트.
+
+6. **데이터베이스 아키텍처 선택**:
+   - 관계형(RDBMS) vs NoSQL.
+   - 트랜잭션 처리와 데이터 구조에 따라 선택.
+
+### 5.3 Redis를 활용한 캐싱
+- **Redis란?**
+  - 인메모리 데이터 저장소로, 빠른 읽기/쓰기를 지원.
+  - TTL(Time-To-Live)을 설정해 데이터 유효 기간 관리 가능.
+
+- **사용 예시** (Python):
+  ```python
+  import redis
+
+  # Redis 연결
+  r = redis.StrictRedis(host='localhost', port=6379, db=0)
+
+  # 캐싱 데이터 설정
+  r.set("key", "value", ex=60)  # 60초 동안 유효
+
+  # 캐싱 데이터 가져오기
+  value = r.get("key")
+  print(value)
+  ```
 
 ---
 
-## 6. 참고 자료
-- **Wikipedia**: [Compiler](https://en.wikipedia.org/wiki/Compiler)
-- **ACM Digital Library**: 최신 컴파일러 연구 논문.
-- **GitHub**: 오픈소스 컴파일러 및 LLVM 프로젝트.
+## 6. 학습 추천 자료
+
+### 6.1 입문용 자료
+- **책**:
+  - "Compilers: Principles, Techniques, and Tools" (Dragon Book)
+  - "High Performance MySQL" by Baron Schwartz.
+- **온라인 강의**:
+  - Coursera: *Introduction to Databases*
+  - Udemy: *SQL Performance Tuning*
+
+### 6.2 실습 자료
+- **Redis**: [Redis 공식 문서](https://redis.io/)
+- **MySQL**: [MySQL 공식 사이트](https://dev.mysql.com/)
+- **PostgreSQL**: [PostgreSQL 문서](https://www.postgresql.org/docs/)
+
+---
+
+## 7. 참고 자료
+- **Wikipedia**: [Compiler](https://en.wikipedia.org/wiki/Compiler), [Database Optimization](https://en.wikipedia.org/wiki/Database_optimization)
+- **ACM Digital Library**: 최신 컴파일러 및 데이터베이스 논문.
+- **GitHub**: 오픈소스 컴파일러 및 데이터베이스 프로젝트.
+
+---
+
+> 작성자: 컴파일러와 데이터베이스 최적화에 관심 있는 학습자들을 위한 가이드입니다. 추가 질문이나 논의는 언제든 환영합니다!
+
 
 ---
 
