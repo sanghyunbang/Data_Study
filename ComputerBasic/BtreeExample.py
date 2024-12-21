@@ -186,3 +186,31 @@ for key in [6, 15, 20]:
     btree.delete(key)
     print(f"B-Tree after deleting {key}:")
     btree.traverse()
+
+####메소드를 사용하는 경우#####
+
+pip install bplustree
+from bplustree import BPlusTree
+
+# B+Tree 생성
+tree = BPlusTree("test.db", order=4)  # order: 차수
+
+# 데이터 삽입
+keys = [10, 20, 5, 6, 15, 30, 25, 22, 8]
+for key in keys:
+    tree[str(key)] = f"Value for {key}"
+
+print("B+Tree after insertion:")
+for key in tree.keys():
+    print(key, tree[key])
+
+# 데이터 삭제
+for key in [6, 15, 20]:
+    del tree[str(key)]
+    print(f"B+Tree after deleting {key}:")
+    for key in tree.keys():
+        print(key, tree[key])
+
+# Close the tree
+tree.close()
+
